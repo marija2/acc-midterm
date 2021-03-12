@@ -31,17 +31,6 @@ var randomLng;
 
 var randomNum = Math.floor( Math.random() * 1000 );
 
-const options = {
-  method: 'GET',
-  url: 'https://us-restaurant-menus.p.rapidapi.com/restaurants/search/geo',
-  qs: {lon: '-74.000994', lat: '40.719150', distance: '1', page: '1'},
-  headers: {
-    'x-rapidapi-key': 'ea5f2997dbmshea90cbb326daa2dp186e4fjsne8436cff717d',
-    'x-rapidapi-host': 'us-restaurant-menus.p.rapidapi.com',
-    useQueryString: true
-  }
-};
-
 var getDogFactUrl = 'https://dog-facts-api.herokuapp.com/api/v1/resources/dogs?number=1';
 var getDogImageUrl = 'https://dog.ceo/api/breeds/image/random';
 
