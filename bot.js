@@ -1,10 +1,10 @@
 
 // pulling in the twit package
-const Twit = require('twit');
+const Twit = require ( 'twit' );
 
 //const config = require('./config.js');
-const request = require('request');
-const fs = require('fs');
+const request = require ( 'request' );
+const fs = require ( 'fs' );
 
 var inputText;
 var location;
@@ -12,10 +12,12 @@ var location;
 //var T = new Twit( config );
 
 var T = new Twit ( {
+
   consumer_key:         process.env['CONSUMER_KEY'],
   consumer_secret:      process.env['CONSUMER_SECRET'],
   access_token:         process.env['ACCESS_TOKEN'],
   access_token_secret:  process.env['ACCESS_TOKEN_SECRET'],
+
 } );
 
 var date = new Date();
@@ -34,6 +36,14 @@ var randomNum = Math.floor( Math.random() * 1000 );
 var getDogFactUrl = 'https://dog-facts-api.herokuapp.com/api/v1/resources/dogs?number=1';
 var getDogImageUrl = 'https://dog.ceo/api/breeds/image/random';
 
+var dogFactData;
+var dogImageData;
+var encodedDogImg;
+var mediaIdStr;
+var altText;
+var metaDesc;
+var tweet_params;
+
 //call the first time
 tweetFromBot();
 
@@ -46,8 +56,9 @@ function tweetFromBot ( error, data, response ) {
 
   function gotDogFact ( error, response, body ) {
 
-    var dogFactData = JSON.parse ( body )
+    dogFactData = JSON.parse ( body )
 
+    // heroku 5 hours ahead
     currentDate = ( date.getMonth() + 1 ) + "/" + date.getDate() + "/" + date.getFullYear();
     currentTime = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
 
@@ -59,16 +70,16 @@ function tweetFromBot ( error, data, response ) {
 
     function gotDogImage ( error, response, body  ) {
       
-      var dogImageData = JSON.parse ( body );
+      dogImageData = JSON.parse ( body );
 
       if ( dogImageData.status != 'success' ) return;
 
       currentDate = ( date.getMonth() + 1 ) + date.getDate() + date.getFullYear();
       currentTime = date.getHours() + date.getMinutes() + date.getSeconds();
 
-      downloadDogImage ( dogImageData.message, 'images/img' + currentDate + currentTime + '.png');
+      downloadDogImage ( dogImageData.message, 'images/img' + currentDate + currentTime + '.png' );
 
-      function downloadDogImage( imgUrl, filename ) {
+      function downloadDogImage ( imgUrl, filename ) {
 
         request.head ( imgUrl, downloadedImg );
 
@@ -77,27 +88,26 @@ function tweetFromBot ( error, data, response ) {
           request ( imgUrl ).pipe ( fs.createWriteStream ( filename ) ).on ( 'close', finished );
         }
 
-        function finished() {
+        function finished () {
 
-          var encodedDogImg = fs.readFileSync ( filename, { encoding: 'base64' } );
+          encodedDogImg = fs.readFileSync ( filename, { encoding: 'base64' } );
 
           // post just the image
           T.post('media/upload', { media_data: encodedDogImg }, uploadedImg );
 
           function uploadedImg ( error, data, response ) {
 
-            var mediaIdStr = data.media_id_string;
-
+            mediaIdStr = data.media_id_string;
             // alt_text
-            var altText = "This image depicts a dog";
-            var metaDesc = { media_id: mediaIdStr, alt_text: altText };
+            altText = "This image depicts a dog";
+            metaDesc = { media_id: mediaIdStr, alt_text: altText };
               
             T.post ( 'media/metadata/create', metaDesc, createdMedia );
 
             function createdMedia ( error, data, response ) {
 
               // post is creating a new object
-              var tweet_params = { status: tweetText, media_ids: mediaIdStr };
+              tweet_params = { status: tweetText, media_ids: mediaIdStr };
 
               T.post('statuses/update', tweet_params, tweeted );
 

@@ -22,8 +22,6 @@
   },
   "homepage": "https://github.com/marija2/acc-midterm#readme",
   "dependencies": {
-    "cross-blob": "^2.0.0",
-    "file-saver": "^2.0.5",
     "twit": "^2.2.11"
   }
 }
