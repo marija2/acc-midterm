@@ -63,7 +63,10 @@ function tweetFromBot ( error, data, response ) {
 
       if ( dogImageData.status != 'success' ) return;
 
-      downloadDogImage ( dogImageData.message, 'images/img1.png');
+      currentDate = ( date.getMonth() + 1 ) + date.getDate() + date.getFullYear();
+      currentTime = date.getHours() + date.getMinutes() + date.getSeconds();
+
+      downloadDogImage ( dogImageData.message, 'images/img' + currentDate + currentTime + '.png');
 
       function downloadDogImage( imgUrl, filename ) {
 
