@@ -6,11 +6,7 @@ const Twit = require ( 'twit' );
 const request = require ( 'request' );
 const fs = require ( 'fs' );
 
-var inputText;
-var location;
-
 //var T = new Twit( config );
-
 var T = new Twit ( {
 
   consumer_key:         process.env['CONSUMER_KEY'],
@@ -20,20 +16,17 @@ var T = new Twit ( {
 
 } );
 
+// to print the date and time, this is to make sure that the tweets are unique
 var date = new Date();
 var currentDate;
 var currentTime;
 
+// will hold the text of the tweet
 var tweetText;
-var tweet_params;
-var i = 0;
 
-var randomLat;
-var randomLng;
-
-var randomNum = Math.floor( Math.random() * 1000 );
-
+// to get a random dog fact
 var getDogFactUrl = 'https://dog-facts-api.herokuapp.com/api/v1/resources/dogs?number=1';
+// to get a random dog image
 var getDogImageUrl = 'https://dog.ceo/api/breeds/image/random';
 
 var dogFactData;
@@ -41,19 +34,20 @@ var dogImageData;
 var encodedDogImg;
 var mediaIdStr;
 var altText;
-var metaDesc;
-var tweet_params;
 
 //call the first time
 tweetFromBot();
 
 // how many milliseconds between executing the callback func
+// tweet every 3 hours
 setInterval ( tweetFromBot, 3*60*60*1000 );
 
 function tweetFromBot ( error, data, response ) {
 
+  // ask for the random dog fact
   request ( getDogFactUrl, gotDogFact );
 
+  // got the random dog fact
   function gotDogFact ( error, response, body ) {
 
     dogFactData = JSON.parse ( body )
@@ -64,19 +58,25 @@ function tweetFromBot ( error, data, response ) {
 
     tweetText = currentDate + ' ' + currentTime + '\n' + dogFactData[0].fact;
 
+    // if fact is longer then 140 chars, will not tweet
     if ( tweetText.length > 140 ) return;
 
+    // ask for a random dog image
     request ( getDogImageUrl, gotDogImage );
 
+    // got the random dog image
     function gotDogImage ( error, response, body  ) {
       
       dogImageData = JSON.parse ( body );
 
+      // if no image, don't tweet
       if ( dogImageData.status != 'success' ) return;
 
+      // for the name of the image
       currentDate = ( date.getMonth() + 1 ) + date.getDate() + date.getFullYear();
       currentTime = date.getHours() + date.getMinutes() + date.getSeconds();
 
+      // download dog image to laptop
       downloadDogImage ( dogImageData.message, 'images/img' + currentDate + currentTime + '.png' );
 
       function downloadDogImage ( imgUrl, filename ) {
@@ -90,30 +90,33 @@ function tweetFromBot ( error, data, response ) {
 
         function finished () {
 
+          // encoding thhe image
           encodedDogImg = fs.readFileSync ( filename, { encoding: 'base64' } );
 
-          // post just the image
+          // post just the image to twitter
           T.post('media/upload', { media_data: encodedDogImg }, uploadedImg );
 
+          // image posted to twitter
           function uploadedImg ( error, data, response ) {
 
+            // get the id
             mediaIdStr = data.media_id_string;
-            // alt_text
+            // set alt text
             altText = "This image depicts a dog";
-            metaDesc = { media_id: mediaIdStr, alt_text: altText };
               
-            T.post ( 'media/metadata/create', metaDesc, createdMedia );
+            T.post ( 'media/metadata/create', { media_id: mediaIdStr, alt_text: altText }, createdMedia );
 
             function createdMedia ( error, data, response ) {
 
-              // post is creating a new object
-              tweet_params = { status: tweetText, media_ids: mediaIdStr };
+              // post the text and the uploaded image
+              T.post('statuses/update', { status: tweetText, media_ids: mediaIdStr }, tweeted );
 
-              T.post('statuses/update', tweet_params, tweeted );
-
+              // posted the text and the image
               function tweeted ( error, data, response ) {
 
+                // if something went wronr, print error
                 if ( error ) console.log ( error );
+                // else print what was posted
                 else console.log ( data.text );
 
               }
@@ -131,187 +134,3 @@ function tweetFromBot ( error, data, response ) {
   }
 
 }
-
-
-/*request(options, function ( error, response, body ) {
-	if ( error ) console.log ( error );
-
-	else {
-    var data = JSON.parse ( body );  
-
-    //console.log ( data.result.data );
-    var index = Math.floor( Math.random() * ( data.result.data.length - 1 ) );
-    //console.log ( data.result.data.length );
-    //console.log ( data.result.data[index] );
-
-    //inputText = data.result.data[index].restaurant_name;
-    inputText = "restaurant";
-
-    // lat: 40.69 : 40.81 = 0.12
-    // lng: -74.022 : - 73.94 = 0.082
-    randomLat = ( Math.random() / 0.12 ) + 40.69;
-    randomLng = ( Math.random() / 0.082 ) - 74.022;
-    location = randomLat + ',' + randomLng;
-  
-    googlePlacesURL = googlePlacesBase + 'location=' + location + '&radius=2000&type=restaurant&key=' + googleApiKey;
-
-    request ( googlePlacesURL, gotGoogleData );
-
-    function gotGoogleData ( error, response, body ) {
-
-      var googleData = JSON.parse ( body );
-
-      if ( googleData.status != 'OK' ) {
-        console.log( googleData.status );
-      }
-      else {
-        console.log( googleData.candidates.length );
-        console.log( googleData.candidates );
-
-        /*while ( googleData.candidates[index].rating < 4.5 ) {
-          index = Math.floor( Math.random() * ( googleData.candidates.length ) );
-        }*/
-
-        /*currentDate = ( date.getMonth() + 1 ) + "/" + date.getDate() + "/" + date.getFullYear();
-        currentTime = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds()
-
-        if (  googleData.candidates[0].photos.length == 0 ) return;
-
-        console.log ( googleData.candidates[0].photos.length );
-
-        googlePhotoUrl = googlePhotoBase + googleData.candidates[0].photos[0].photo_reference + '&key=' + googleApiKey;
-
-        download ( googlePhotoUrl, 'images/img1.png');
-
-        function download ( imgUrl, filename) {
-          request.head ( imgUrl, imageOnComputer );
-
-          function imageOnComputer ( error, response, body ) {
-
-            // need to close stream
-            request ( imgUrl ).pipe ( fs.createWriteStream ( filename ) ).on ( 'close', finished );
-          }
-
-          function finished() {}
-        }
-      }
-    }  
-  }
-});*/
-
-//call the first time
-//botTweet();
-
-// how many milliseconds between executing the callback func
-//setInterval ( botTweet, 60*5*1000 );
-
-function botTweet ( error, data, response ) {
-
-  request ( url, gotData );
-
-  // got data about air quality
-  function gotData ( error, response, body ) {
-
-    var data = JSON.parse ( body );         // parse data into JSON
-
-    if ( data.status != 'ok' ) return;
-
-    for ( i = 0; i < data.data.length; i++ ) {
-
-      if ( data.data[i].aqi > 300 ) {
-
-        currentDate = ( date.getMonth() + 1 ) + "/" + date.getDate() + "/" + date.getFullYear();
-        currentTime = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
-
-        tweetText = "Station: " + data.data[i].station.name + "\nAQI: " + data.data[i].aqi + "\nDate: " + currentDate + "\nTime: " + currentTime + "\n";
-
-        //inputText = data.data[i].station.name;
-        inputText = "Restaurants in New York City";
-
-        //location = 'point:' + data.data[i].lat +','+ data.data[i].lon;
-
-        //console.log(data);
-
-        googlePlacesURL = googlePlacesBase + 'query=' + inputText + '&key=' + googleApiKey;
-
-        console.log ( googlePlacesURL );
-
-        request ( googlePlacesURL, gotGoogleData );
-
-        function gotGoogleData ( error, response, body ) {
-          //console.log ( "i was here");
-          //console.log ( body );
-
-          var googleData = JSON.parse ( body );
-
-          if ( googleData.status != 'OK' ) {
-            //console.log ( "i was here");
-            console.log( googleData.status );
-          }
-          else console.log( googleData );
-        }
-        
-        tweet_params = { status: tweetText/*, media_ids: mediaIdStr*/ };
-
-        //T.post('statuses/update', tweet_params, tweeted );
-
-        /*function tweeted ( error, data, response ) {
-
-          if ( error ) console.log ( error );
-
-          else console.log ( data.text );
-        }*/
-      }
-    }
-
-    //download ( data.img, 'images/comic' + comicNum +".png");
-
-    //function download( imgUrl, filename ) {
-
-      //request.head ( imgUrl, imageOnComputer );
-
-      /*function imageOnComputer ( error, response, body ) {
-        // need to close stream
-        request ( imgUrl ).pipe ( fs.createWriteStream ( filename ) ).on ( 'close', finished );
-      }*/
-
-      //function finished() {
-        //var encodedImg = fs.readFileSync ( filename, { encoding: 'base64' } );
-      
-        // post just the image
-        //T.post('media/upload', { media_data: encodedImg }, uploaded );
-
-        //function uploaded ( error, data, response ) {
-
-          //var mediaIdStr = data.media_id_string;
-          
-          //var meta_params = { media_id: mediaIdStr };
-
-          // alt_text
-          //var altText = "description of the image";
-          //var metaDesc = { media_id: mediaIdStr, alt_text: altText };
-          
-          //T.post ( 'media/metadata/create', { media_id: mediaIdStr }, createdMedia );
-
-          //function createdMedia ( error, data, response ) {
-                
-            // post is creating a new object
-            //var tweet_params = { status: tweet/*, media_ids: mediaIdStr*/ };
-
-            //T.post('statuses/update', tweet_params, tweeted );
-
-            /*function tweeted ( error, data, response ) {
-
-              if ( error ) console.log ( error );
-
-              else console.log ( data.text );
-            }*/
-          //}
-        //}
-      //}
-    //}
-  }
-}
-
-
-
