@@ -51,7 +51,6 @@ function tweetFromBot ( error, data, response ) {
 
     dogFactData = JSON.parse ( body );
 
-    // heroku 4 hours ahead
     currentDate = ( date.getMonth() + 1 ) + "/" + date.getDate() + "/" + date.getFullYear();
     currentTime = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
 
