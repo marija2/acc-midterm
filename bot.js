@@ -4,9 +4,6 @@ const Twit = require ( 'twit' );
 const request = require ( 'request' );
 const fs = require ( 'fs' );
 
-// const config = require('./config.js');
-// var T = new Twit( config );
-
 var T = new Twit ( {
 
   consumer_key:         process.env['CONSUMER_KEY'],
